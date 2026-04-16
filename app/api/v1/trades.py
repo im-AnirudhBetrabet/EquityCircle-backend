@@ -1,0 +1,51 @@
+from fastapi import APIRouter, HTTPException
+from typing import List
+from app.db.supabase import supabase
+from app.schemas.trade import TradeCreate, TradeRead
+from app.services.finance import get_live_prices
+
+router = APIRouter()
+
+@router.post("/", response_model=TradeRead)
+def record_create(trade: TradeCreate):
+    """
+    Logs a new stock purchase into a specific cohort
+    """
+    try:
+        data_to_insert = trade.model_dump(mode='json')
+        response       = supabase.table("trades").insert(data_to_insert).execute()
+
+        if not response.data:
+            raise HTTPException(status_code=400, detail="Failed to record trade")
+
+        return response.data[0]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/active/{cohort_id}")
+def get_active_trades(cohort_id: str):
+    """
+    Fetches all OPEN trades for a cohort AND appends the live market price.
+    """
+    try:
+        response = supabase.table("trades").select("*").eq("cohort_id", cohort_id).eq("status", "OPEN").execute()
+        trades   = response.data
+
+        if not trades:
+            return []
+
+        tickers     = [trade["ticker_symbol"] for trade in trades]
+        live_prices = get_live_prices(tickers)
+
+        for trade in trades:
+            ticker = trade["ticker_symbol"]
+            trade["current_price"] = live_prices.get(ticker, 0.0)
+
+            total_invested             = trade["buy_price"] * trade["quantity"]
+            current_value              = trade["current_price"] * trade["quantity"]
+            trade["unrealized_profit"] = round(current_value - total_invested, 2)
+
+        return trades
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

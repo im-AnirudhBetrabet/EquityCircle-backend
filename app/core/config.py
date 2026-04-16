@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     SUPABASE_URL: str
     SUPABASE_KEY: str
 
+    TEST_GROUP_ID: str
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 
 settings = Settings()

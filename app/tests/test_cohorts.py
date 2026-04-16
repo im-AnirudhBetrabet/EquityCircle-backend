@@ -4,7 +4,7 @@ from app.core.config import settings
 
 client = TestClient(app)
 
-TEST_GROUP_ID = ""
+TEST_GROUP_ID = settings.TEST_GROUP_ID
 
 def test_create_and_fetch_cohort():
     """
