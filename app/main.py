@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-
+from app.api.v1.router import api_router
 
 def get_application() -> FastAPI:
     application = FastAPI(
@@ -26,6 +26,7 @@ def get_application() -> FastAPI:
             "version": settings.VERSION
         }
 
+    application.include_router(api_router, prefix=settings.API_V1_STR)
     return application
 
 
