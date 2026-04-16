@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
 from app.db.supabase import supabase
+from app.schemas import TradeUpdate
 from app.schemas.trade import TradeCreate, TradeRead
 from app.services.finance import get_live_prices
 
@@ -47,5 +48,25 @@ def get_active_trades(cohort_id: str):
             trade["unrealized_profit"] = round(current_value - total_invested, 2)
 
         return trades
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put("/{trade_id}/close", response_model=TradeRead)
+def close_trade(trade_id: str, update_data: TradeUpdate):
+    """
+    Executes a sell. Marks the trade as CLOSED and locks in the sell price.
+    """
+    try:
+        data_to_update = {
+            "status"    : "CLOSED",
+            "sell_price": update_data.sell_price,
+            "sell_date" : update_data.sell_date.isoformat()
+        }
+
+        response = supabase.table("trades").update(data_to_update).eq("id", trade_id).execute()
+
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Trade not found")
+        return response.data[0]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
