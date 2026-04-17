@@ -1,14 +1,15 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 from app.db.supabase import supabase
 from app.schemas import TradeUpdate
 from app.schemas.trade import TradeCreate, TradeRead
 from app.services.finance import get_live_prices
+from app.core.security import get_current_user, verify_group_membership
 
 router = APIRouter()
 
 @router.post("/", response_model=TradeRead)
-def record_create(trade: TradeCreate):
+def record_create(trade: TradeCreate, current_user = Depends(get_current_user)):
     """
     Logs a new stock purchase into a specific cohort
     """
@@ -25,7 +26,7 @@ def record_create(trade: TradeCreate):
 
 
 @router.get("/active/{cohort_id}")
-def get_active_trades(cohort_id: str):
+def get_active_trades(cohort_id: str, current_user = Depends(get_current_user)):
     """
     Fetches all OPEN trades for a cohort AND appends the live market price.
     """

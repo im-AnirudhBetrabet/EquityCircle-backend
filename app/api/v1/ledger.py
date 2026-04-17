@@ -1,18 +1,20 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 from app.db.supabase import supabase
 from app.schemas.ledger import LedgerCreate, LedgerRead
 from app.services.math_engine import calculate_equity_splits
+from app.core.security import get_current_user, verify_group_membership
 
 
 router = APIRouter()
 
 @router.post("/", response_model=LedgerRead)
-def record_transaction(transaction: LedgerCreate):
+def record_transaction(transaction: LedgerCreate, current_user = Depends(get_current_user)):
     """
     Record a new capital movement (DEPOSIT, WITHDRAWAL, ROLL_FORWARD, INTEREST).
     """
     try:
+        verify_group_membership(current_user.id, str(transaction.group_id))
         data_to_insert = transaction.model_dump(mode="json")
         response       = supabase.table("ledger").insert(data_to_insert).execute()
         print(response)
@@ -26,7 +28,7 @@ def record_transaction(transaction: LedgerCreate):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/splits/{cohort_id}")
-def get_cohort_splits(cohort_id: str):
+def get_cohort_splits(cohort_id: str, current_user = Depends(get_current_user)):
     """
     Fetches all transactions for a cohort and dynamically calculates who owns what.
     """

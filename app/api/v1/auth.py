@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from typing import Optional
-from app.db.supabase import supabase
+from app.db.supabase import auth_client
 
 router = APIRouter()
 
@@ -28,7 +28,7 @@ def sign_up(user_data: UserCreate):
         if user_data.group_id:
             user_metadata["group_id"] = user_data.group_id
 
-        response = supabase.auth.sign_up({
+        response = auth_client.auth.sign_up({
             "email"   : user_data.email,
             "password": user_data.password,
             "options" : {
@@ -49,7 +49,7 @@ def login(user_data: UserLogin):
     Authenticate and return the session JWT token.
     """
     try:
-        response = supabase.auth.sign_in_with_password({
+        response = auth_client.auth.sign_in_with_password({
             "email"   : user_data.email,
             "password": user_data.password
         })

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.db.supabase import supabase
-from app.core.security import get_current_user
+from app.core.security import get_current_user, verify_group_membership
 from app.services.finance import get_live_prices
 from app.services.math_engine import calculate_equity_splits
 
@@ -12,10 +12,11 @@ def get_dashboard_summary(group_id: str, current_user = Depends(get_current_user
     The Master endpoint. Assembles all data needed for the dashboard.
     """
     try:
+        verify_group_membership(current_user.id, group_id)
         cohorts_res    = supabase.table("cohorts").select("*").eq("group_id", group_id).eq("status", "OPEN").execute()
         active_cohorts = cohorts_res.data
 
-        cohort_ids = [c["id"] for c in cohorts_res]
+        cohort_ids    = [c["id"] for c in cohorts_res]
         active_trades = []
         if cohort_ids:
             trades_res    = supabase.table("trades").select("*").in_("cohort_id", cohort_ids).eq("status", "OPEN").execute()

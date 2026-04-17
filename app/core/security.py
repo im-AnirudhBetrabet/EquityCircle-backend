@@ -27,3 +27,20 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+def verify_group_membership(user_id: str, group_id: str, require_admin: bool = False):
+    """
+    Checks the group_members junction table to ensure he user has access.
+    """
+    res = supabase.table("group_members").select("role").eq("user_id", user_id). eq("group_id", group_id).execute()
+
+    if not res.data:
+        raise HTTPException(status_code=403, detail="You do not have access to this group.")
+
+    user_role = res.data[0]["role"]
+
+    if require_admin and user_role != "admin":
+        raise HTTPException(status_code=403, detail="Admin privileges required.")
+
+    return user_role
+
