@@ -15,6 +15,7 @@ def get_active_cohorts(group_id: str, current_user = Depends(get_current_user)):
         response = supabase.table("cohorts").select("*").eq("group_id", group_id).eq("status", "OPEN").execute()
         return response.data
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/", response_model=CohortRead)
@@ -31,4 +32,5 @@ def create_cohort(cohort: CohortCreate):
 
         return response.data[0]
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=500, detail=str(e))

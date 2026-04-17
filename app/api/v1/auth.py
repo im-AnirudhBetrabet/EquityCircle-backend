@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
+from typing import Optional
 from app.db.supabase import supabase
 
 router = APIRouter()
@@ -8,7 +9,7 @@ class UserCreate(BaseModel):
     email       : str
     password    : str
     display_name: str
-    group_id    : str = Field(..., description="The UUID of the EquityCircle group")
+    group_id    : Optional[str] = Field(None, description="Optional. The UUID of the EquityCircle group")
 
 class UserLogin(BaseModel):
     email   : str
@@ -20,14 +21,18 @@ def sign_up(user_data: UserCreate):
     Register a new user and pass metadata to trigger the supabase function
     """
     try:
+        user_metadata = {
+            "display_name" : user_data.display_name
+        }
+
+        if user_data.group_id:
+            user_metadata["group_id"] = user_data.group_id
+
         response = supabase.auth.sign_up({
             "email"   : user_data.email,
             "password": user_data.password,
             "options" : {
-                "data": {
-                    "display_name": user_data.display_name,
-                    "group_id"    : user_data.group_id
-                }
+                "data": user_metadata
             }
         })
 

@@ -1,10 +1,23 @@
 from fastapi.testclient import TestClient
 from app.main import app
 from app.core.config import settings
+from app.core.security import get_current_user
+from unittest.mock import MagicMock
 
 client = TestClient(app)
 
 TEST_GROUP_ID = settings.TEST_GROUP_ID
+
+mock_user = MagicMock()
+mock_user.id = 'test-user-uuid'
+mock_user.user_id = {
+    "group_id": TEST_GROUP_ID
+}
+
+async def override_get_current_user():
+    return mock_user
+
+app.dependency_overrides[get_current_user] = override_get_current_user
 
 def test_create_and_fetch_cohort():
     """
