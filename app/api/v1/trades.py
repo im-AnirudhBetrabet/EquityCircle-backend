@@ -2,9 +2,11 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 from app.db.supabase import supabase
 from app.schemas import TradeUpdate
-from app.schemas.trade import TradeCreate, TradeRead
+from app.schemas.trade import TradeCreate, TradeRead, TradeAdjustment
 from app.services.finance import get_live_prices
 from app.core.security import get_current_user, verify_group_membership
+from app.services.logger import sys_logger
+import yfinance as yf
 
 router = APIRouter()
 
@@ -15,13 +17,22 @@ def record_create(trade: TradeCreate, current_user = Depends(get_current_user)):
     """
     try:
         data_to_insert = trade.model_dump(mode='json')
+        try:
+            ticker_info = yf.Ticker(trade.ticker_symbol).info
+            data_to_insert["sector"] = ticker_info.get("sector", "Other")
+        except Exception as e:
+            sys_logger.warning(f"Could not fetch sector for {trade.ticker_symbol}: {e}")
+            data_to_insert["sector"] = "Other"
+
         response       = supabase.table("trades").insert(data_to_insert).execute()
 
         if not response.data:
+            sys_logger.error(f"Failed to record trade {response.error_message}")
             raise HTTPException(status_code=400, detail="Failed to record trade")
 
         return response.data[0]
     except Exception as e:
+        sys_logger.error(e)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -50,6 +61,7 @@ def get_active_trades(cohort_id: str, current_user = Depends(get_current_user)):
 
         return trades
     except Exception as e:
+        sys_logger.error(e)
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/{trade_id}/close", response_model=TradeRead)
@@ -67,7 +79,24 @@ def close_trade(trade_id: str, update_data: TradeUpdate):
         response = supabase.table("trades").update(data_to_update).eq("id", trade_id).execute()
 
         if not response.data:
+            sys_logger.error(f"Trade not found: {response.error_message}")
             raise HTTPException(status_code=404, detail="Trade not found")
         return response.data[0]
     except Exception as e:
+        sys_logger.error(e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put("/{trade_id}/adjust")
+def adjust_trade_pnl(trade_id: str, payload: TradeAdjustment):
+    try:
+        trade_res = supabase.table("trades").select("other_pnl").eq("id", trade_id).single().execute()
+        current_other = float(trade_res.data.get("other_pnl") or 0)
+
+        new_total = current_other + payload.other_pnl_amount
+
+        adjust_response = supabase.table("trades").update({ "other_pnl": new_total}).eq("id", trade_id).execute()
+
+        return adjust_response.data[0]
+    except Exception as e:
+        sys_logger.error(e)
         raise HTTPException(status_code=500, detail=str(e))

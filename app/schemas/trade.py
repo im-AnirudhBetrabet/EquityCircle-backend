@@ -8,7 +8,7 @@ class TradeBase(BaseModel):
     ticker_symbol: str   = Field(..., description="The yfinance compatible ticker e.g. RELIANCE.NS")
     quantity     : float = Field(..., description="Number of share brought.")
     buy_price    : float = Field(..., description="Average price per share.")
-
+    buy_date     : datetime
 class TradeCreate(TradeBase):
     # Used when a new trade is executed
     cohort_id: UUID
@@ -28,3 +28,6 @@ class TradeRead(TradeBase):
     sell_date : Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+class TradeAdjustment(BaseModel):
+    other_pnl_amount: float

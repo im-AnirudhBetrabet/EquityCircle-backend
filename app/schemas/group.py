@@ -21,5 +21,6 @@ class GroupRequestRead(BaseModel):
     group_id  : UUID
     status    : str
     id        : UUID
+    profiles  : dict
 
     model_config = ConfigDict(from_attributes=True)

@@ -7,9 +7,12 @@ class Settings(BaseSettings):
 
     SUPABASE_URL: str
     SUPABASE_KEY: str
+    SENDER_EMAIL: str
+    SENDER_APP_PASSWORD: str
 
-    TEST_GROUP_ID: str
+    TEST_GROUP_ID : str
     TEST_COHORT_ID: str
+
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 
 settings = Settings()
