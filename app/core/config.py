@@ -14,6 +14,6 @@ class Settings(BaseSettings):
     TEST_GROUP_ID : str
     TEST_COHORT_ID: str
 
-    model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8",extra="ignore", case_sensitive=True)
 
 settings = Settings()
