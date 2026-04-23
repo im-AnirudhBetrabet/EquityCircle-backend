@@ -1,4 +1,4 @@
-import os
+import resend
 import smtplib
 from collections import defaultdict
 from email.mime.text import MIMEText
@@ -20,21 +20,18 @@ def send_squad_digest(recipient_emails: list, subject: str, html_content: str):
     :param html_content: The content of the email being sent
     """
     try:
-        message            = MIMEMultipart("alternative")
-        message["Subject"] = subject
-        message["From"]    = f"StoxCircle <{SENDER_EMAIL}>"
-        message["Bcc"]     = ", ".join(recipient_emails)
+        resend.api_key     = settings.RESEND_API_KEY
+        r = resend.Emails.send({
+            "from"   : f"StoxCircle <{settings.SENDER_EMAIL}>",
+            "to"     : [settings.APP_EMAIL],
+            "bcc"    : recipient_emails,
+            "html"   : html_content,
+            "subject": subject
+        })
 
-        part = MIMEText(html_content, "html")
-        message.attach(part)
-
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(SENDER_EMAIL, SENDER_PASSWORD)
-            server.send_message(message)
-
-        print(f"[{datetime.now()}] Successfully sent digest to {len(recipient_emails)} members")
+        sys_logger.info(f"[{datetime.now()}] Successfully sent digest {r['id']} to {len(recipient_emails)} members.")
     except Exception as e:
-        print(f"Failed to send email: {e}")
+        sys_logger.error(f"Failed to send email: {e}")
 
 
 def build_health_report_html(report_data: dict, group_name: str, time_of_day: str):

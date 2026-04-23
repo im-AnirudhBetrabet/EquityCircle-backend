@@ -7,10 +7,10 @@ from app.services.finance import get_live_prices
 from app.core.security import get_current_user, verify_group_membership
 from app.services.logger import sys_logger
 import yfinance as yf
-
+from typing import Optional
 router = APIRouter()
 
-@router.post("/", response_model=TradeRead)
+@router.post("/", response_model=Optional[TradeRead])
 def record_create(trade: TradeCreate, current_user = Depends(get_current_user)):
     """
     Logs a new stock purchase into a specific cohort
@@ -64,7 +64,7 @@ def get_active_trades(cohort_id: str, current_user = Depends(get_current_user)):
         sys_logger.error(e)
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.put("/{trade_id}/close", response_model=TradeRead)
+@router.put("/{trade_id}/close", response_model=Optional[TradeRead])
 def close_trade(trade_id: str, update_data: TradeUpdate):
     """
     Executes a sell. Marks the trade as CLOSED and locks in the sell price.

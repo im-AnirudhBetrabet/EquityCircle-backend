@@ -3,11 +3,12 @@ from app.db.supabase import supabase
 from app.schemas.ledger import LedgerCreate, LedgerRead, CohortSettlementPayload
 from app.services.math_engine import calculate_equity_splits
 from app.core.security import get_current_user, verify_group_membership
-
+from app.services.logger import sys_logger
+from typing import Optional
 
 router = APIRouter()
 
-@router.post("/", response_model=LedgerRead)
+@router.post("/", response_model=Optional[LedgerRead])
 def record_transaction(transaction: LedgerCreate, current_user = Depends(get_current_user)):
     """
     Record a new capital movement (DEPOSIT, WITHDRAWAL, ROLL_FORWARD, INTEREST).

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
-from typing import List
+from typing import List, Optional
 from app.core.security import get_current_user, verify_group_membership
 from app.db.supabase import supabase
 from app.schemas.cohort import CohortRead, CohortCreate
@@ -10,7 +10,7 @@ from app.services.logger import sys_logger
 
 router = APIRouter()
 
-@router.get("/", response_model=List[CohortRead])
+@router.get("/", response_model=Optional[List[CohortRead]])
 def get_active_cohorts(group_id: str, current_user = Depends(get_current_user)):
     """
     Fetches all the OPEN cohorts for a specified group
@@ -144,7 +144,7 @@ def get_cohort_details(group_id: str, cohort_id: str, current_user = Depends(get
         sys_logger.error(e)
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/", response_model=CohortRead)
+@router.post("/", response_model=Optional[CohortRead])
 def create_cohort(cohort: CohortCreate, current_user = Depends(get_current_user)):
     """
     Open a new monthly cohort (e.g., APR_2026)
@@ -162,7 +162,7 @@ def create_cohort(cohort: CohortCreate, current_user = Depends(get_current_user)
         sys_logger.error(e)
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/history", response_model=List[CohortRead])
+@router.get("/history", response_model=Optional[List[CohortRead]])
 def get_historical_cohorts(group_id: str, current_user = Depends(get_current_user)):
     """
     Fetches all CLOSED cohorts for a specified group (The Archive).
@@ -173,7 +173,7 @@ def get_historical_cohorts(group_id: str, current_user = Depends(get_current_use
         response = supabase.table("cohorts").select("*").eq("group_id", group_id).eq("status", "CLOSED").order("created_at", desc=True).execute()
         if response.data:
             return response.data
-        return None
+        return []
     except Exception as e:
         sys_logger.error(e)
         raise HTTPException(status_code=500, detail=str(e))

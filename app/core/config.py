@@ -5,11 +5,12 @@ class Settings(BaseSettings):
     VERSION     : str = "0.0.1"
     API_V1_STR  : str = "/api/v1"
 
-    SUPABASE_URL: str
-    SUPABASE_KEY: str
-    SENDER_EMAIL: str
+    SUPABASE_URL       : str
+    SUPABASE_KEY       : str
+    SENDER_EMAIL       : str
+    RESEND_API_KEY     : str
     SENDER_APP_PASSWORD: str
-
+    APP_EMAIL          : str
     TEST_GROUP_ID : str
     TEST_COHORT_ID: str
 
