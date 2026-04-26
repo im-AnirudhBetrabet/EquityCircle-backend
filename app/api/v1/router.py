@@ -1,3 +1,5 @@
+from sys import prefix
+
 from fastapi import APIRouter
 from app.api.v1 import cohorts, trades, ledger, auth, dashboard, groups
 

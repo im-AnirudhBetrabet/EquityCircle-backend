@@ -7,7 +7,7 @@ from app.services.finance import get_live_prices
 from collections import defaultdict
 from app.services.colors import uuid_to_color
 from app.services.logger import sys_logger
-
+from app.services.stock_history import get_stock_history
 router = APIRouter()
 
 @router.get("/", response_model=Optional[List[CohortRead]])
@@ -104,7 +104,8 @@ def get_cohort_details(group_id: str, cohort_id: str, current_user = Depends(get
                 "status"    : trade["status"],
                 "sell_date" : trade["sell_date"] if trade["status"] == "CLOSED" else None,
                 "sell_price": float(trade["sell_price"]) if trade["status"] == "CLOSED" else None,
-                "other_pnl" : trade["other_pnl"]
+                "other_pnl" : trade["other_pnl"],
+                "history"   : get_stock_history(ticker, trade["buy_date"], trade["buy_price"])
             })
             current_val = float(trade["quantity"]) * float(trade["buy_price"])
             if trade["status"] == "OPEN":
