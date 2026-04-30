@@ -8,7 +8,7 @@ from typing import Optional
 
 router = APIRouter()
 
-@router.post("/", response_model=Optional[LedgerRead])
+@router.post("/record", response_model=Optional[LedgerRead])
 def record_transaction(transaction: LedgerCreate, current_user = Depends(get_current_user)):
     """
     Record a new capital movement (DEPOSIT, WITHDRAWAL, ROLL_FORWARD, INTEREST).
